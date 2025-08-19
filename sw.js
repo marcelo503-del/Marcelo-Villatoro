@@ -1,16 +1,31 @@
-self.addEventListener("install", event => {
+const CACHE_NAME = 'app-cache-v1';
+const ASSETS = [
+  './',
+  'index.html',
+  'manifest.webmanifest'
+  // Add icons here if you add them (e.g., 'icon-192.png', 'icon-512.png')
+];
+
+self.addEventListener('install', event => {
   event.waitUntil(
-    caches.open("app-cache").then(cache =>
-      cache.addAll([
-        "index.html",
-        "manifest.webmanifest"
-      ])
-    )
+    caches.open(CACHE_NAME).then(cache => cache.addAll(ASSETS))
   );
+  self.skipWaiting();
 });
 
-self.addEventListener("fetch", event => {
+self.addEventListener('activate', event => {
+  event.waitUntil(
+    caches.keys().then(keys =>
+      Promise.all(keys.map(k => (k === CACHE_NAME ? null : caches.delete(k))))
+    )
+  );
+  self.clients.claim();
+});
+
+self.addEventListener('fetch', event => {
+  const req = event.request;
+  // Cache-first strategy
   event.respondWith(
-    caches.match(event.request).then(r => r || fetch(event.request))
+    caches.match(req).then(cached => cached || fetch(req))
   );
 });
