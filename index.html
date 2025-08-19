@@ -4,6 +4,13 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Exercise & Journal App</title>
+  <!-- PWA and iOS full-screen support -->
+  <meta name="theme-color" content="#0f172a">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="apple-mobile-web-app-title" content="Exercise & Journal">
+  <link rel="manifest" href="manifest.webmanifest">
+  <!-- <link rel="apple-touch-icon" href="icon-192.png"> -->
   <style>
     body { font-family: Arial, sans-serif; margin: 20px; background:#f5f5f5; }
     h1 { text-align: center; }
@@ -16,6 +23,13 @@
   </style>
 </head>
 <body>
+  <script>
+  if ("serviceWorker" in navigator) {
+    navigator.serviceWorker.register("sw.js")
+      .then(reg => console.log("Service Worker registered", reg))
+      .catch(err => console.log("Service Worker failed", err));
+  }
+</script>
   <h1>📓 Exercise & Journal</h1>
 
   <div class="section">
