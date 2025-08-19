@@ -1,0 +1,66 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Exercise & Journal App</title>
+  <style>
+    body { font-family: Arial, sans-serif; margin: 20px; background:#f5f5f5; }
+    h1 { text-align: center; }
+    .section { margin-bottom: 25px; padding:15px; background:#fff; border-radius:8px; }
+    textarea, input { width: 100%; margin: 5px 0; padding: 8px; }
+    button { padding: 10px; margin-top: 10px; width: 100%; background: #007bff; color: white; border:none; border-radius: 5px; }
+    button:hover { background: #0056b3; }
+    ul { list-style-type: none; padding:0; }
+    li { padding:8px; border-bottom:1px solid #ddd; }
+  </style>
+</head>
+<body>
+  <h1>📓 Exercise & Journal</h1>
+
+  <div class="section">
+    <h2>Log Exercise</h2>
+    <input id="exercise" placeholder="e.g. Bench Press - 5x5">
+    <button onclick="saveExercise()">Save Exercise</button>
+    <ul id="exerciseList"></ul>
+  </div>
+
+  <div class="section">
+    <h2>Journal Entry</h2>
+    <textarea id="journal" rows="4" placeholder="Write your thoughts..."></textarea>
+    <button onclick="saveJournal()">Save Journal</button>
+    <ul id="journalList"></ul>
+  </div>
+
+<script>
+  function saveExercise(){
+    let val = document.getElementById("exercise").value;
+    if(val.trim()!==""){
+      let li = document.createElement("li");
+      li.innerText = val + " ("+new Date().toLocaleString()+")";
+      document.getElementById("exerciseList").appendChild(li);
+      localStorage.setItem("exercises", document.getElementById("exerciseList").innerHTML);
+      document.getElementById("exercise").value="";
+    }
+  }
+
+  function saveJournal(){
+    let val = document.getElementById("journal").value;
+    if(val.trim()!==""){
+      let li = document.createElement("li");
+      li.innerText = val + " ("+new Date().toLocaleString()+")";
+      document.getElementById("journalList").appendChild(li);
+      localStorage.setItem("journals", document.getElementById("journalList").innerHTML);
+      document.getElementById("journal").value="";
+    }
+  }
+
+  window.onload=function(){
+    if(localStorage.getItem("exercises")) 
+      document.getElementById("exerciseList").innerHTML=localStorage.getItem("exercises");
+    if(localStorage.getItem("journals")) 
+      document.getElementById("journalList").innerHTML=localStorage.getItem("journals");
+  }
+</script>
+</body>
+</html>
