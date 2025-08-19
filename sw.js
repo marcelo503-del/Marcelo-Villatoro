@@ -1,17 +1,19 @@
-// sw.js — network-first for HTML, cache-first for static files
+// sw.js — simple PWA service worker
 
-const VERSION = 'v3';                          // bump this whenever you deploy
-const STATIC_CACHE  = `static-${VERSION}`;
-const RUNTIME_CACHE = `runtime-${VERSION}`;
+const VERSION = 'v4';
+const STATIC_CACHE = `static-${VERSION}`;
 
-// Use relative paths so it works on GitHub Pages project sites
+// Keep paths **relative** so it works at /Marcelo-Villatoro/ on GitHub Pages
 const PRECACHE_URLS = [
   './',
   './index.html',
-  './manifest.webmanifest'
+  './manifest.webmanifest',
+  // Add icons here if you add them later:
+  // './icon-192.png',
+  // './icon-512.png',
 ];
 
-// Install: pre-cache core files
+// Install: cache core files
 self.addEventListener('install', (event) => {
   event.waitUntil(
     caches.open(STATIC_CACHE).then((cache) => cache.addAll(PRECACHE_URLS))
@@ -19,58 +21,48 @@ self.addEventListener('install', (event) => {
   self.skipWaiting();
 });
 
-// Activate: clean up old caches
+// Activate: remove old caches and take control
 self.addEventListener('activate', (event) => {
   event.waitUntil(
     caches.keys().then((keys) =>
-      Promise.all(
-        keys
-          .filter((k) => k !== STATIC_CACHE && k !== RUNTIME_CACHE)
-          .map((k) => caches.delete(k))
-      )
+      Promise.all(keys.map((k) => (k !== STATIC_CACHE ? caches.delete(k) : null)))
     )
   );
   self.clients.claim();
 });
 
-// Fetch: HTML -> network-first; assets -> cache-first
+// Fetch:
+// - HTML: network‑first (fallback to cache/offline)
+// - Other assets: cache‑first (fallback to network)
 self.addEventListener('fetch', (event) => {
   const req = event.request;
-  if (req.method !== 'GET') return;
-
   const accept = req.headers.get('accept') || '';
 
-  // HTML/documents: always try network first so new deploys show immediately
-  if (accept.includes('text/html')) {
+  // Treat navigations/HTML as network‑first
+  if (req.mode === 'navigate' || accept.includes('text/html')) {
     event.respondWith(
       fetch(req)
         .then((res) => {
           const copy = res.clone();
-          caches.open(RUNTIME_CACHE).then((c) => c.put(req, copy));
+          caches.open(STATIC_CACHE).then((cache) => cache.put(req, copy));
           return res;
         })
         .catch(() =>
-          caches.match(req).then((cached) => cached || caches.match('./index.html'))
+          caches.match(req).then((hit) => hit || caches.match('./index.html'))
         )
     );
     return;
   }
 
-  // Static assets: cache-first, then network
-  const isStatic = /\.(?:js|css|png|jpe?g|webp|svg|ico|woff2?)$/i.test(
-    new URL(req.url).pathname
-  );
-
+  // Other requests (CSS/JS/images): cache‑first
   event.respondWith(
-    caches.match(req).then((cached) => {
-      if (cached || !isStatic) return cached || fetch(req);
-      return fetch(req)
-        .then((res) => {
-          const copy = res.clone();
-          caches.open(RUNTIME_CACHE).then((c) => c.put(req, copy));
-          return res;
-        })
-        .catch(() => caches.match('./index.html'));
+    caches.match(req).then((hit) => {
+      if (hit) return hit;
+      return fetch(req).then((res) => {
+        const copy = res.clone();
+        caches.open(STATIC_CACHE).then((cache) => cache.put(req, copy));
+        return res;
+      });
     })
   );
 });
